@@ -1,0 +1,32 @@
+services:
+  outline:
+    image: docker.getoutline.com/outlinewiki/outline:latest
+    env_file: ./docker.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - storage-data:/var/lib/outline/data
+      - ./ca-certificate.crt:/etc/ssl/certs/ca-certificate.crt  # Mount the SSL cert
+    depends_on:
+      - redis
+    environment:
+      PGSSLROOTCERT: /etc/ssl/certs/ca-certificate.crt  # Ensure SSL is trusted
+      FORCE_HTTPS: "false"
+      URL: "http://localhost:3000"  
+
+  redis:
+    image: redis
+    env_file: ./docker.env
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis.conf:/redis.conf
+    command: ["redis-server", "/redis.conf"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+volumes:
+  storage-data:
